@@ -9,49 +9,37 @@ import json
 import pandas as pd
 
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-# Path to the folder containing the processed data
-PROCESSED_DIR = current_dir
-
-# Dictionaries for storing data
-processed_frames = {}
-processed_logs = {}
-
-# List all files in the folder
-all_files = os.listdir(PROCESSED_DIR)
-# Filter by JSON files, as these are the “table of contents” for the Parquets.
-json_files = sorted([f for f in all_files if f.endswith('.json')])
-
-print(f"Load Data: {PROCESSED_DIR}")
-print(f"Found {len(json_files)} city data pairs.\n")
+# 1. Alle verfügbaren Parquet-Dateien im Ordner finden und klein schreiben
+parquet_files = {f.lower(): f for f in os.listdir(PROCESSED_DIR) if f.endswith('.parquet')}
 
 for j_file in json_files:
-    # Build paths
     j_path = os.path.join(PROCESSED_DIR, j_file)
-    p_path = j_path.replace('.json', '.parquet')
-
-    # Load log file (JSON)
+    
     with open(j_path, 'r') as f:
         meta = json.load(f)
-
-    city_name = meta['city']
-    processed_logs[city_name] = meta
-
-    # Loading Parquet file
-    if os.path.exists(p_path):
+    
+    # Stadtname aus JSON (z.B. "Paris")
+    original_city_name = meta['city']
+    city_key = original_city_name.lower() # "paris"
+    
+    # Wir suchen nach "paris.parquet" in unserer Liste
+    target_parquet = f"{city_key}.parquet"
+    
+    if target_parquet in parquet_files:
+        p_path = os.path.join(PROCESSED_DIR, parquet_files[target_parquet])
         df = pd.read_parquet(p_path)
-        processed_frames[city_name] = df
-
-        # Brief status report
-        start = meta['time_frame']['start_exact'][:10] # Nur Datum
-        end = meta['time_frame']['end_exact'][:10]
-        vars_count = meta['variables']['count']
-
-        print(f"✅ {city_name:<18} | {len(df):>7} rows | {vars_count} Vars | {start} bis {end}")
+        
+        processed_frames[original_city_name] = df
+        processed_logs[original_city_name] = meta
+        print(f"✅ Match gefunden: {original_city_name} -> {parquet_files[target_parquet]}")
     else:
-        print(f"⚠️ Warning: Parquet file for {city_name} is missing!")
+        print(f"⚠️ Keine Parquet-Datei für {original_city_name} gefunden (erwartet: {target_parquet})")
 
-print(f"\n All data successfully loaded into ‘processed_frames’ and ‘processed_logs’.")
+# Sicherheitscheck vor Zeile 70
+if not processed_frames:
+    st.error("Kritischer Fehler: Keine Daten geladen!")
+    st.write("Gefundene Parquets:", list(parquet_files.values()))
+    st.stop()
 
 
 # In[9]:
