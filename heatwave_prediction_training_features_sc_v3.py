@@ -9,37 +9,63 @@ import json
 import pandas as pd
 
 
-# 1. Alle verfügbaren Parquet-Dateien im Ordner finden und klein schreiben
-parquet_files = {f.lower(): f for f in os.listdir(PROCESSED_DIR) if f.endswith('.parquet')}
+import os
+import json
+import pandas as pd
+import streamlit as st
 
+# 1. Dynamischer Pfad-Fix (Funktioniert lokal und auf GitHub/Streamlit)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+PROCESSED_DIR = current_dir
+
+# Dictionaries für die Daten
+processed_frames = {}
+processed_logs = {}
+
+# 2. Inhaltsverzeichnis der Parquet-Dateien erstellen (Mapping: kleingeschrieben -> echter Name)
+# Das löst das Problem, dass die Datei 'paris.parquet' heißt, aber die JSON anders.
+parquet_lookup = {f.lower(): f for f in os.listdir(PROCESSED_DIR) if f.endswith('.parquet')}
+
+# 3. Alle JSON-Dateien finden
+all_files = os.listdir(PROCESSED_DIR)
+json_files = sorted([f for f in all_files if f.endswith('.json')])
+
+# Debug-Info für dich in Streamlit (kannst du später löschen)
+if not json_files:
+    st.error(f"Keine JSON-Dateien gefunden in: {PROCESSED_DIR}")
+    st.stop()
+
+# 4. Der intelligente Lade-Loop
 for j_file in json_files:
     j_path = os.path.join(PROCESSED_DIR, j_file)
     
     with open(j_path, 'r') as f:
         meta = json.load(f)
     
-    # Stadtname aus JSON (z.B. "Paris")
-    original_city_name = meta['city']
-    city_key = original_city_name.lower() # "paris"
+    # Stadtname aus der JSON lesen (z.B. "Paris")
+    city_name = meta['city']
+    city_key = city_name.lower()
     
-    # Wir suchen nach "paris.parquet" in unserer Liste
-    target_parquet = f"{city_key}.parquet"
+    # Wir suchen nach "paris.parquet"
+    expected_parquet = f"{city_key}.parquet"
     
-    if target_parquet in parquet_files:
-        p_path = os.path.join(PROCESSED_DIR, parquet_files[target_parquet])
+    if expected_parquet in parquet_lookup:
+        p_path = os.path.join(PROCESSED_DIR, parquet_lookup[expected_parquet])
         df = pd.read_parquet(p_path)
         
-        processed_frames[original_city_name] = df
-        processed_logs[original_city_name] = meta
-        print(f"✅ Match gefunden: {original_city_name} -> {parquet_files[target_parquet]}")
+        # In Dictionaries speichern
+        processed_frames[city_name] = df
+        processed_logs[city_name] = meta
     else:
-        print(f"⚠️ Keine Parquet-Datei für {original_city_name} gefunden (erwartet: {target_parquet})")
+        st.warning(f"⚠️ Parquet für '{city_name}' nicht gefunden. Erwartet: {expected_parquet}")
 
-# Sicherheitscheck vor Zeile 70
+# 5. Sicherheitscheck für den weiteren Code (verhindert IndexError in Zeile 70)
 if not processed_frames:
-    st.error("Kritischer Fehler: Keine Daten geladen!")
-    st.write("Gefundene Parquets:", list(parquet_files.values()))
+    st.error("❌ Keine Daten geladen! Bitte Dateinamen prüfen.")
+    st.write("Dateien im Ordner:", all_files)
     st.stop()
+
+# Ab hier kann dein Code sicher mit list(processed_frames.keys())[0] weitermachen
 
 
 # In[9]:
