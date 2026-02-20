@@ -8,6 +8,8 @@ import os
 import json
 import pandas as pd
 
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
 # Path to the folder containing the processed data
 PROCESSED_DIR = current_dir
 
