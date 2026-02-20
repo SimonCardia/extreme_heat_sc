@@ -1,0 +1,27 @@
+{
+    "city": "paris",
+    "time_frame": {
+        "start_exact": "1990-01-01 00:00:00",
+        "end_exact": "2025-12-31 23:00:00",
+        "rows": 315576
+    },
+    "variables": {
+        "count": 14,
+        "list": [
+            "temperature_2m",
+            "relative_humidity_2m",
+            "pressure_msl",
+            "shortwave_radiation",
+            "soil_moisture_0_to_7cm",
+            "wind_speed_10m",
+            "t_850hPa",
+            "t_500hPa",
+            "u_850hPa",
+            "u_500hPa",
+            "v_850hPa",
+            "v_500hPa",
+            "wind_dir_sin",
+            "wind_dir_cos"
+        ]
+    }
+}
