@@ -9,7 +9,7 @@ import json
 import pandas as pd
 
 # Path to the folder containing the processed data
-PROCESSED_DIR = "/home/simcard/city_data_parquet/processed_data_parquet"
+PROCESSED_DIR = current_dir
 
 # Dictionaries for storing data
 processed_frames = {}
